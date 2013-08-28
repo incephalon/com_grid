@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Commit Bar</title>
+   
+     <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+   
+    <link href="kendo/styles/kendo.dataviz.metro.min.css" rel="stylesheet" />
+
+    <script src="kendo/js/jquery.min.js"></script>
+    <script src="kendo/js/kendo.all.min.js"></script>
+    <script src="knockout.js"></script>
+    <script src="Mappings.js"></script>
+    <script src="selectMapping.js"></script>
+    <style>
+		#table_selector{
+			margin-top:50px;
+			position:relative;
+			 left: 50%;	
+			/*top: 50%;*/
+			width:300px;
+			margin-left: -600px;
+		}
+		#field_selector{
+			margin-top:50px;
+		 position:relative;
+		 left: 50%;	
+		 /*top: 50%;*/
+		 width:500px;
+	
+	}
+	
+	#logo{
+		margin:-20px 10px 10px 10px;	
+		//display:block;
+	}
+	
+	#example{
+		//margin-top:50px;	
+	
+	}
+	
+	#chart{
+		height:600px;
+	}
+	
+	</style>
+</head>
+<body>
+<image id="logo" src="commit_logo.png"/>
+
+            <select id="table_selector" data-bind="value: selectedTable">
+                <option value="Staff">Staff</option>
+                <option value="CollegeReady">CollegeReady</option>
+                <option value="Student">Student</option>
+                <option value="Financial">Financial</option>
+                <option value="Completion">Completion</option>
+                <option value="NonTaks">NonTaks</option>
+                <option value="TaksStandard">TaksStandard</option>
+                <option value="TaksCommended">TaksCommended</option>
+                <option value="TaksFailures">TaksFailures</option>
+                <option value="TaksModified">TaksModified</option>
+                <option value="TaksBilingual">TaksBilingual</option>
+            </select>
+            <select id="field_selector" data-bind="value: selectedField">
+            	
+            </select>
+            
+        <div id="example" class="k-content absConf">
+            <div class="chart-wrapper" style="margin: auto;">
+                <div id="chart">
+            </div>
+
+        </div>
+            <script>
+            
+            var MyData=[];
+            var selectedField="";
+
+
+            var tables=["CollegeReady", 
+            		"Completion",
+            		"Financial",
+            		"Staff",
+            		"Student",
+            		"NonTaks",
+            		"TaksCommended",
+            		"TaksStandard",
+            		"TaksBilingual",
+            		"TaksFailures",
+            		"TaksModified",
+            ];
+            
+           
+            
+            var viewModel={
+            	 tables: ["one", "two", "three"],
+            	 fields:ko.observableArray(),
+            	 selectedTable: ko.observable("Financial"),
+            	 selectedField: ko.observable("DPFEAADCK")
+      
+            }
+            
+            viewModel.selectedTable.subscribe(function(newValue) {
+			   fillSelect(newValue);
+			   //ajax
+			   getData(newValue);
+			   //
+			   
+			});
+			
+			 viewModel.selectedField.subscribe(function(newValue) {
+					var theMapper= $('#table_selector').val();
+					reverseLookup(newValue, selectMapping[theMapper]);		
+					createChart();
+			});
+			            
+            ko.applyBindings(viewModel);
+            
+            
+            
+			function reverseLookup(value, mapping)
+			{
+				var got=false;
+				
+				$.each(mapping, function(i, key){
+					if(mapping[i]==value)
+					{
+						//alert(i);
+						got =true;
+						//return i;
+						//break;
+						selectedField=i;
+					}
+					
+					
+				});
+				return;
+				//return 'didnt get';
+			}
+            
+            function getData(newValue)
+            {
+            	
+	            $.ajax({
+	                url: "http://commit.azurewebsites.net/api/"+newValue,
+	                dataType: 'json',
+	                success: function (results) {
+	                        MyData=[];
+		                   	$.each(results, function(i, key){
+			            		MyData.push(results[i]);	
+			            	});
+			            	reverseLookup($('#field_selector').val(), selectMapping[newValue]);
+	         				createChart();
+	                }
+	            });
+	            
+            	
+            }
+            
+          
+            
+           	
+            //console.log(MyData);
+            
+            function fillSelect(newValue)
+            {
+            	var mapper = newValue;
+				//alert(mapper);
+				//console.log(mapper);
+				$('#field_selector').html('');
+				//console.log(selectMapping[mapper])
+        	    $.each(selectMapping[mapper], function(key, value) {   
+				     $('#field_selector')
+						    //.empty()
+						    .append('<option>'+value+'</option>')
+				});
+				
+				$('#field_selector').prop('selectedIndex', 1);	
+            }
+            
+                function createChart() {
+                    $("#chart").kendoChart({
+               dataSource: {
+                            data: MyData
+                        },
+                        title: {
+                            text: "AEIS K-12 District Data"
+                        },
+                        legend: {
+                            position: "top"
+                        },
+                        seriesDefaults: {
+                            type: "column"
+                        },
+                        series://DPCTENGA
+                        [{
+                            field: selectedField,
+                            name: selectMapping[selectedField],
+							color: '#c3151c',
+							DISTRICT:"district"
+							//c3151c
+							//041424
+                        },
+						
+						],
+                        categoryAxis: {
+                            field: "district",
+                            labels: {
+                                rotation: -90
+                            },
+                            majorGridLines: {
+                                visible: false
+                            }
+                        },
+                        valueAxis: {
+                            labels: {
+                                format: "N0"
+                            },
+                            //majorUnit: 20,
+                            line: {
+                                visible: false
+                            }
+                        },
+                        tooltip: {
+                            visible: true,
+                            template: "#= dataItem.district# #= value#",
+                            //format: "N0",
+							background: "white",
+							border: {
+							  color: "black",
+							  width: 2
+							},
+                        }
+                    });
+                }
+
+                $(document).ready(function() {
+
+					fillSelect('Financial');
+					$('#field_selector').val('District 2011 Finance: Expenditure by Function-Central Administration Per Pupil, All Funds');
+
+	                 $.ajax({
+		                url: "http://commit.azurewebsites.net/api/Financial",
+		                dataType: 'json',
+		                success: function (results) {
+		                        MyData=[];
+			                   	$.each(results, function(i, key){
+				            		MyData.push(results[i]);	
+				            	});
+				            	selectedField="DPFEAADCK";
+				            	createChart();
+		         
+		                }
+		            });
+	                        
+                    setTimeout(function() {
+                        // Initialize the chart with a delay to make sure
+                        // the initial animation is visible
+                        //getData("Financial");
+			            //selectedField="DPFEAADCK";
+                        //createChart();
+                        
+                        
+                        
+                        //createChart(MyData, "DPFEAADCK");
+
+                        $("#example").bind("kendo:skinChange", function(e) {
+                            createChart();
+                        });
+                    }, 400);
+                });
+            </script>
+        </div>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+
+</body>
+</html>

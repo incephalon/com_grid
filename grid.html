@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Commit Grid</title>
+    <link href="kendo/styles/kendo.common.min.css" rel="stylesheet" />
+    <link href="kendo/styles/kendo.blueopal.min.css" rel="stylesheet" />
+    <script src="kendo/js/jquery.min.js"></script>
+    <script src="kendo/js/kendo.all.min.js"></script>
+<script src="Mappings.js"></script>
+<script src="selectMapping.js"></script>
+<link href="bootstrap/css/bootstrap.css" rel="stylesheet"/>	
+    <style>
+	.k-grid  .k-grid-header  .k-header  .k-link {
+		height: auto;
+	}
+	
+	.k-grid  .k-grid-header  .k-header {
+		white-space: normal;
+	}
+
+	#table_selector{
+		margin-left:105px;
+		width:500px;	
+	}
+	
+	#logo{
+	margin:10px;	
+	}
+	
+
+	</style>
+
+</head>
+<body>
+    <image id="logo" src="commit_logo.png"/>
+            <select id="table_selector">
+                <option value="Financial">Financial</option>
+                <option value="Staff">Staff</option>
+                <option value="CollegeReady">CollegeReady</option>
+                <option value="Student">Student</option>
+                <option value="Completion">Completion</option>
+                <option value="NonTaks">NonTaks</option>
+                <option value="TaksStandard">TaksStandard</option>
+                <option value="TaksCommended">TaksCommended</option>
+                <option value="TaksFailures">TaksFailures</option>
+                <option value="TaksModified">TaksModified</option>
+                <option value="TaksBilingual">TaksBilingual</option>
+            </select>
+    
+
+    <div id="example" class="k-content">
+  		<div id="grid"></div>
+	</div>
+  
+     
+    <script type="text/javascript">
+
+$(document).ready(function(e) {
+		var calculatedHeight=$(document).height();
+		$("#grid").height(calculatedHeight-60);
+		//$("#grid tr").css("background-color", "red");
+		
+		getData("Financial");
+		    
+});
+
+		
+		
+
+			var MyData=[];
+			var tenData=[];
+			var MyValues=[];
+
+			
+			
+
+			$('#table_selector').change(function() {
+				selectedTable=$('#table_selector').val();
+				getData(selectedTable);	
+			});  
+			
+
+			function getData(selectedTable)
+            {
+				
+				
+				
+				$.ajax({
+					url: "http://commit.azurewebsites.net/api/" +selectedTable,
+					dataType: 'json',
+					success: function (results) {
+							MyValues=[];
+							 $('#grid').val(''); //(here grvScript is the div which we use for grid)
+					        $('#grid').html('');
+							
+							//$("#grid").data("kendoGrid").dataSource.data([ ]);
+							var here_counter=0;
+							
+							$.each(selectMapping[selectedTable], function(i, key){	
+							if(here_counter==0)
+							{
+								MyValues.push(new ColumnInfo(i, selectMapping[selectedTable][i],325));
+							}
+							else
+							{
+								MyValues.push(new ColumnInfo(i, selectMapping[selectedTable][i], 125));
+							}
+								here_counter++;
+	
+							});
+							
+							console.log(results);
+							console.log(MyValues);
+							DisplayStocks(results, MyValues);
+							var calculatedHeight=$(document).height();
+							$("#grid").height(calculatedHeight-60);
+					}
+				});
+            }
+
+			function reverseLookup(value, mapping)
+			{
+				$.each(mapping, function(i, key){
+					if(mapping[i]==value)
+					{
+						selectedField=i;
+					}
+				});
+				return;
+			}
+
+
+
+
+			
+			
+			
+			function ColumnInfo(field, title, width)
+			{
+				this.field=field;
+				this.title=title;
+				this.width=width;
+			}
+			
+			//function newData(field, title)
+			//{
+			//	this.field=field;
+			//	this.title=title;
+			//}
+   
+
+        // runs when all requests are over
+        function DisplayStocks(results, Columns) {
+
+			console.log(Columns);
+
+            $("#grid").kendoGrid({
+				//color:"#0000ff",
+				 //sortable: true,
+				 scrollable: true,
+				 selectable: true,
+				 //pageable: true,
+               	 dataSource: {
+                    data: results,
+                	},
+                	columns:  Columns, 
+            });
+			
+			//var grid = $("#grid").data("kendoGrid");
+			//grid.dataSource.data(results);
+			//grid.refresh();
+
+        }
+    </script>
+
+        <script src="bootstrap/js/bootstrap.min.js"></script>
+</body>
+</html>
